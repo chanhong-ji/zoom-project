@@ -10,5 +10,11 @@ html(lang="en")
         header
             h1 It works!!
         main 
-            h3 welcome to zooom
-        script(src="public/js/app.js") 
+            form#nameForm
+                input(type="text", placeholder="nickname", required)
+                button Save
+            ul 
+            form#messageForm
+                input(type="text", placeholder="Write a message...", required)
+                button Send
+        script(src="/public/js/app.js") 

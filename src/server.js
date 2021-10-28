@@ -19,4 +19,31 @@ const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
 
+const sockets = [];
+
+wss.on("connection", (socket) => {
+  console.log("Connected to Browser ✅");
+  sockets.push(socket);
+  socket["name"] = "Anony";
+  socket.on("close", () => {
+    console.log("Server has closed");
+  });
+  socket.on("message", (message) => {
+    const messageObj = JSON.parse(message);
+    console.log(messageObj);
+    switch (messageObj.type) {
+      case "chat":
+        sockets.forEach((aSocket) => {
+          aSocket.send(
+            `${socket.name} : ${messageObj.payload.toString("utf-8")}`
+          );
+        });
+        break;
+      case "name":
+        socket["name"] = messageObj.payload;
+        break;
+    }
+  });
+});
+
 server.listen(PORT, onListening);
