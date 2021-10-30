@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -15,35 +15,24 @@ const onListening = () => console.log(`Listening on port : ${PORT}🌍`);
 
 const PORT = 4000;
 
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
 
-const wss = new WebSocket.Server({ server });
+const wsServer = SocketIO(httpServer);
 
-const sockets = [];
-
-wss.on("connection", (socket) => {
-  console.log("Connected to Browser ✅");
-  sockets.push(socket);
-  socket["name"] = "Anony";
-  socket.on("close", () => {
-    console.log("Server has closed");
+wsServer.on("connection", (socket) => {
+  socket.onAny((event) => console.log(`Socket Event: ${event}`));
+  socket.on("enter_room", (roomName, showRoom) => {
+    socket.join(roomName);
+    showRoom();
+    socket.to(roomName).emit("welcome");
   });
-  socket.on("message", (message) => {
-    const messageObj = JSON.parse(message);
-    console.log(messageObj);
-    switch (messageObj.type) {
-      case "chat":
-        sockets.forEach((aSocket) => {
-          aSocket.send(
-            `${socket.name} : ${messageObj.payload.toString("utf-8")}`
-          );
-        });
-        break;
-      case "name":
-        socket["name"] = messageObj.payload;
-        break;
-    }
+  socket.on("disconnecting", (reason) => {
+    socket.rooms.forEach((room) => socket.to(room).emit("bye"));
+  });
+  socket.on("message", (text, roomName, done) => {
+    socket.to(roomName).emit("message", text);
+    done();
   });
 });
 
-server.listen(PORT, onListening);
+httpServer.listen(PORT, onListening);

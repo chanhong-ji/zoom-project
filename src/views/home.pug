@@ -8,13 +8,18 @@ html(lang="en")
         title Zooom
     body 
         header
-            h1 It works!!
+            h1 Welcome to Zooom!
         main 
-            form#nameForm
-                input(type="text", placeholder="nickname", required)
-                button Save
-            ul 
-            form#messageForm
-                input(type="text", placeholder="Write a message...", required)
-                button Send
+            div#welcome
+                form 
+                    input(type="text", placeholder="room name", required)
+                    button Enter Room
+            div#room
+                h3
+                ul
+                form 
+                    input(type="text", placeholder="Write a message...", required)
+                    button Send Message
+
+        script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js") 
