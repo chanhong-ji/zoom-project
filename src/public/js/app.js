@@ -67,3 +67,15 @@ socket.on("bye", (nickname) => {
 });
 
 socket.on("message", paintMessage);
+
+socket.on("room_change", (rooms) => {
+  const findList = find.querySelector("ul");
+  if (rooms.length === 0) {
+    findList.innerHTML = "";
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    findList.append(li);
+  });
+});
