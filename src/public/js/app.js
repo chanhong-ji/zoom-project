@@ -58,11 +58,15 @@ const onMessageSubmit = (event) => {
 
 messageForm.addEventListener("submit", onMessageSubmit);
 
-socket.on("welcome", (nickname) => {
+socket.on("welcome", (nickname, userCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${userCount})`;
   paintMessage(`${nickname}가 채팅방에 들어왔습니다.`);
 });
 
 socket.on("bye", (nickname) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${userCount})`;
   paintMessage(`${nickname}가 채팅방에서 나갔습니다.`);
 });
 
