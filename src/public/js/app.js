@@ -1,29 +1,44 @@
 const socket = io();
-const welcome = document.getElementById("welcome");
-const welcomeForm = welcome.querySelector("form");
+const nickname = document.getElementById("nickname");
+const nicknameForm = nickname.querySelector("form");
+const find = document.getElementById("find");
+const findForm = find.querySelector("form");
 const room = document.getElementById("room");
-const messageForm = room.querySelector("form");
+const messageForm = document.getElementById("message");
 const messageList = room.querySelector("ul");
-
-room.hidden = true;
 
 let roomName = null;
 
+find.hidden = true;
+room.hidden = true;
+
+function onNicknameSubmit(event) {
+  event.preventDefault();
+  const input = nicknameForm.querySelector("input");
+  const value = input.value;
+  socket.emit("nickname", value);
+  input.value = "";
+  nickname.hidden = true;
+  find.hidden = false;
+}
+
+nicknameForm.addEventListener("submit", onNicknameSubmit);
+
 function showRoom() {
-  welcome.hidden = true;
+  find.hidden = true;
   room.hidden = false;
   room.querySelector("h3").innerText = `Room ${roomName}`;
 }
 
 function onRoomNameSubmit(event) {
   event.preventDefault();
-  const input = welcomeForm.querySelector("input");
+  const input = findForm.querySelector("input");
   socket.emit("enter_room", input.value, showRoom);
   roomName = input.value;
   input.value = "";
 }
 
-welcomeForm.addEventListener("submit", onRoomNameSubmit);
+findForm.addEventListener("submit", onRoomNameSubmit);
 
 function paintMessage(text) {
   const li = document.createElement("li");
@@ -43,12 +58,12 @@ const onMessageSubmit = (event) => {
 
 messageForm.addEventListener("submit", onMessageSubmit);
 
-socket.on("welcome", () => {
-  paintMessage(`누군가가 채팅방에 들어왔습니다.`);
+socket.on("welcome", (nickname) => {
+  paintMessage(`${nickname}가 채팅방에 들어왔습니다.`);
 });
 
-socket.on("bye", () => {
-  paintMessage(`누군가가 채팅방에서 나갔습니다.`);
+socket.on("bye", (nickname) => {
+  paintMessage(`${nickname}가 채팅방에서 나갔습니다.`);
 });
 
 socket.on("message", paintMessage);
