@@ -1,15 +1,15 @@
 const socket = io();
-const myFace = document.getElementById("myStream");
+const myFace = document.getElementById("myFace");
 const video = myFace.querySelector("video");
 const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const cameraSelect = document.getElementById("cameraSelect");
+const call = document.getElementById("call");
+call.hidden = true;
 
 let myStream;
 let muted = false;
 let cameraOff = false;
-
-getMedia();
 
 async function getCameras() {
   try {
@@ -81,4 +81,31 @@ cameraBtn.addEventListener("click", () => {
 
 cameraSelect.addEventListener("input", async () => {
   await getMedia(cameraSelect.value);
+});
+
+// Find Form (join a room)
+
+const find = document.getElementById("find");
+const findForm = find.querySelector("form");
+let roomName;
+
+function startMedia() {
+  find.hidden = true;
+  call.hidden = false;
+  getMedia();
+}
+
+findForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = findForm.querySelector("input");
+  const value = input.value;
+  roomName = value;
+  socket.emit("join_room", value, startMedia);
+  input.value = "";
+});
+
+// Socket Codes
+
+socket.on("welcome", () => {
+  console.log("someone joined");
 });
