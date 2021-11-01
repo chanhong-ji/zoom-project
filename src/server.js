@@ -9,7 +9,8 @@ app.set("view engine", "pug");
 app.set("views", __dirname + "/views");
 app.use("/public", express.static(__dirname + "/public"));
 
-app.get("/", (_, res) => res.render("home"));
+// app.get("/", (_, res) => res.render("home"));
+app.get("/", (_, res) => res.render("room"));
 app.get("/*", (_, res) => res.redirect("/"));
 
 const onListening = () => console.log(`Listening on port : ${PORT}🌍`);
@@ -53,7 +54,7 @@ wsServer.on("connection", (socket) => {
   socket.onAny((event) => console.log(`Socket Event: ${event}`));
   socket.on("enter_room", (roomName, showRoom) => {
     socket.join(roomName);
-    showRoom();
+    showRoom(countUser(roomName));
     socket.to(roomName).emit("welcome", socket.nickname, countUser(roomName));
     wsServer.sockets.emit("room_change", publicRooms());
   });

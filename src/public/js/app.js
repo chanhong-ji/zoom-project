@@ -24,10 +24,10 @@ function onNicknameSubmit(event) {
 
 nicknameForm.addEventListener("submit", onNicknameSubmit);
 
-function showRoom() {
+function showRoom(countUser) {
   find.hidden = true;
   room.hidden = false;
-  room.querySelector("h3").innerText = `Room ${roomName}`;
+  room.querySelector("h3").innerText = `Room ${roomName} (${countUser})`;
 }
 
 function onRoomNameSubmit(event) {
