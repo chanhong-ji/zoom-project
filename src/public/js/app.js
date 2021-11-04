@@ -82,6 +82,13 @@ cameraBtn.addEventListener("click", () => {
 
 cameraSelect.addEventListener("input", async () => {
   await getMedia(cameraSelect.value);
+  if (peerConnection) {
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = peerConnection
+      .getSenders()
+      .filter((sender) => sender.track.kind === "video");
+    videoSender.replaceTrack(videoTrack);
+  }
 });
 
 // Find Form (join a room)
