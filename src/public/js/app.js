@@ -10,6 +10,7 @@ call.hidden = true;
 let myStream;
 let muted = false;
 let cameraOff = false;
+let peerConnection;
 
 async function getCameras() {
   try {
@@ -89,23 +90,63 @@ const find = document.getElementById("find");
 const findForm = find.querySelector("form");
 let roomName;
 
-function startMedia() {
+async function initCall() {
   find.hidden = true;
   call.hidden = false;
-  getMedia();
+  await getMedia();
+  makeConnection();
 }
 
-findForm.addEventListener("submit", (event) => {
+findForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const input = findForm.querySelector("input");
   const value = input.value;
   roomName = value;
-  socket.emit("join_room", value, startMedia);
+  await initCall();
+  socket.emit("join_room", value);
   input.value = "";
 });
 
 // Socket Codes
 
-socket.on("welcome", () => {
-  console.log("someone joined");
+socket.on("welcome", async () => {
+  const offer = await peerConnection.createOffer();
+  peerConnection.setLocalDescription(offer);
+  socket.emit("offer", offer, roomName);
 });
+
+socket.on("offer", async (offer) => {
+  peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.createAnswer();
+  peerConnection.setLocalDescription(answer);
+  socket.emit("answer", answer, roomName);
+});
+
+socket.on("answer", (answer) => {
+  peerConnection.setRemoteDescription(answer);
+});
+
+socket.on("ice", (data) => {
+  peerConnection.addIceCandidate(data);
+});
+
+// Peer connection
+
+function makeConnection() {
+  peerConnection = new RTCPeerConnection();
+  peerConnection.addEventListener("icecandidate", onIceCandidate);
+  peerConnection.addEventListener("addstream", onAddStream);
+  myStream.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, myStream);
+  });
+}
+
+function onIceCandidate(data) {
+  peerConnection.addIceCandidate(data.candidate);
+  socket.emit("ice", data.candidate, roomName);
+}
+
+function onAddStream(data) {
+  const peerFaceVideo = document.querySelector("#peerFace video");
+  peerFaceVideo.srcObject = data.stream;
+}
