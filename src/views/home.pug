@@ -8,11 +8,16 @@ block content
                 button Enter room
         div#call
             div#myFace
-                video(autoplay, playsinline, width="400", height="400")
+                video(autoplay, playsinline, width="400", height="400", muted)
                 button#mute Mute
                 button#camera Turn off Camera
                 select#cameraSelect
             div#peerFace
-                video(autoplay, playsinline, width="400", height="400")
+                video(autoplay, playsinline, width="400", height="400", muted)
+            div#chat
+                ul
+                form#message
+                    input(type="text", placeholder="Write a message...", required)
+                    button Send Message
     script(src="/socket.io/socket.io.js") 
     script(src="/public/js/app.js") 

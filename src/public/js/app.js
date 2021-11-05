@@ -11,6 +11,7 @@ let myStream;
 let muted = false;
 let cameraOff = false;
 let peerConnection;
+let chatChannel;
 
 async function getCameras() {
   try {
@@ -117,12 +118,29 @@ findForm.addEventListener("submit", async (event) => {
 // Socket Codes
 
 socket.on("welcome", async () => {
+  chatChannel = peerConnection.createDataChannel("chat");
+  paintMessage("for myself: someone joined!");
+  chatChannel.addEventListener("message", (message) =>
+    paintMessage(message.data)
+  );
+
   const offer = await peerConnection.createOffer();
   peerConnection.setLocalDescription(offer);
   socket.emit("offer", offer, roomName);
 });
 
 socket.on("offer", async (offer) => {
+  peerConnection.addEventListener("datachannel", (event) => {
+    chatChannel = event.channel;
+    chatChannel.addEventListener("open", () =>
+      chatChannel.send("someone joined!")
+    );
+    paintMessage("someone joined!");
+    chatChannel.addEventListener("message", (message) =>
+      paintMessage(message.data)
+    );
+  });
+
   peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
   peerConnection.setLocalDescription(answer);
@@ -134,12 +152,26 @@ socket.on("answer", (answer) => {
 });
 
 socket.on("ice", (data) => {
+  console.log("received candidate");
   peerConnection.addIceCandidate(data);
 });
 
 // Peer connection
 
 function makeConnection() {
+  /*   peerConnection = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: [
+          "stun:stun.l.google.com:19302",
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+          "stun:stun4.l.google.com:19302",
+        ],
+      },
+    ],
+  }); */
   peerConnection = new RTCPeerConnection();
   peerConnection.addEventListener("icecandidate", onIceCandidate);
   peerConnection.addEventListener("addstream", onAddStream);
@@ -149,7 +181,7 @@ function makeConnection() {
 }
 
 function onIceCandidate(data) {
-  peerConnection.addIceCandidate(data.candidate);
+  console.log("sent candidate");
   socket.emit("ice", data.candidate, roomName);
 }
 
@@ -157,3 +189,23 @@ function onAddStream(data) {
   const peerFaceVideo = document.querySelector("#peerFace video");
   peerFaceVideo.srcObject = data.stream;
 }
+
+// chat data channel`
+
+const chat = document.getElementById("chat");
+const chatList = chat.querySelector("ul");
+const chatForm = chat.querySelector("#message");
+
+function paintMessage(text) {
+  const li = document.createElement("li");
+  li.innerText = text;
+  chatList.append(li);
+}
+
+chatForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = chatForm.querySelector("input");
+  paintMessage(input.value);
+  chatChannel.send(input.value);
+  input.value = "";
+});
