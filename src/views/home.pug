@@ -2,7 +2,12 @@ extends base
 
 block content
     main 
+        div#nickname
+            form
+                input(type="text", placeholder="nickname", required)
+                button Save
         div#find
+            ul
             form
                 input(type="text", placeholder="room name", required)
                 button Enter room

@@ -4,14 +4,57 @@ const video = myFace.querySelector("video");
 const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const cameraSelect = document.getElementById("cameraSelect");
+
+const nicknameDiv = document.getElementById("nickname");
+const nicknameForm = nicknameDiv.querySelector("form");
+const find = document.getElementById("find");
+const findForm = find.querySelector("form");
 const call = document.getElementById("call");
-call.hidden = true;
 
 let myStream;
 let muted = false;
 let cameraOff = false;
 let peerConnection;
 let chatChannel;
+// nickname Form (set a nickname)
+
+let nickname;
+find.hidden = true;
+call.hidden = true;
+
+function onNicknameSubmit(event) {
+  event.preventDefault();
+  const input = nicknameForm.querySelector("input");
+  nickname = input.value;
+  input.value = "";
+  nicknameDiv.hidden = true;
+  find.hidden = false;
+}
+
+nicknameForm.addEventListener("submit", onNicknameSubmit);
+
+// Find Form (join a room)
+
+let roomName;
+
+async function initCall() {
+  find.hidden = true;
+  call.hidden = false;
+  await getMedia();
+  makeConnection();
+}
+
+findForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = findForm.querySelector("input");
+  const value = input.value;
+  roomName = value;
+  await initCall();
+  socket.emit("join_room", value);
+  input.value = "";
+});
+
+// Media Devices
 
 async function getCameras() {
   try {
@@ -92,29 +135,6 @@ cameraSelect.addEventListener("input", async () => {
   }
 });
 
-// Find Form (join a room)
-
-const find = document.getElementById("find");
-const findForm = find.querySelector("form");
-let roomName;
-
-async function initCall() {
-  find.hidden = true;
-  call.hidden = false;
-  await getMedia();
-  makeConnection();
-}
-
-findForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const input = findForm.querySelector("input");
-  const value = input.value;
-  roomName = value;
-  await initCall();
-  socket.emit("join_room", value);
-  input.value = "";
-});
-
 // Socket Codes
 
 socket.on("welcome", async () => {
@@ -154,6 +174,18 @@ socket.on("answer", (answer) => {
 socket.on("ice", (data) => {
   console.log("received candidate");
   peerConnection.addIceCandidate(data);
+});
+
+socket.on("room_update", (rooms) => {
+  const findList = find.querySelector("ul");
+  if (rooms.length === 0) {
+    findList.innerHTML = "";
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    findList.append(li);
+  });
 });
 
 // Peer connection

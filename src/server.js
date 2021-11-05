@@ -24,10 +24,26 @@ instrument(wsServer, {
   auth: false,
 });
 
+function getPublicRooms() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = wsServer;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key);
+    }
+  });
+  return publicRooms;
+}
+
 wsServer.on("connection", (socket) => {
   socket.on("join_room", (roomName) => {
     socket.join(roomName);
     socket.to(roomName).emit("welcome");
+    wsServer.sockets.emit("room_update", getPublicRooms());
   });
   socket.on("offer", (offer, roomName) => {
     socket.to(roomName).emit("offer", offer);
