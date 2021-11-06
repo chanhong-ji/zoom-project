@@ -40,6 +40,7 @@ function getPublicRooms() {
 }
 
 wsServer.on("connection", (socket) => {
+  wsServer.sockets.emit("room_update", getPublicRooms());
   socket.on("join_room", (roomName) => {
     socket.join(roomName);
     socket.to(roomName).emit("welcome");
@@ -53,6 +54,13 @@ wsServer.on("connection", (socket) => {
   });
   socket.on("ice", (ice, roomName) => {
     socket.to(roomName).emit("ice", ice);
+  });
+  socket.on("out_room", (roomName) => {
+    const room = wsServer.sockets.adapter.rooms.get(roomName);
+    const me = socket.id;
+    room.delete(me);
+    const lastUser = room;
+    socket.emit("out_room", lastUser);
   });
 });
 

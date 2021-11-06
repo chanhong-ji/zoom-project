@@ -172,7 +172,6 @@ socket.on("answer", (answer) => {
 });
 
 socket.on("ice", (data) => {
-  console.log("received candidate");
   peerConnection.addIceCandidate(data);
 });
 
@@ -186,6 +185,20 @@ socket.on("room_update", (rooms) => {
     li.innerText = room;
     findList.append(li);
   });
+});
+
+socket.on("out_room", (lastUser) => {
+  const peerList = document.getElementById("peers");
+  const peers = peerList.querySelectorAll("#peerFace");
+  let removedPeer;
+  for (const peer of peers) {
+    if (peer.dataset.id in lastUser) {
+      continue;
+    } else {
+      removedPeer = peer;
+    }
+  }
+  peerList.remove(removedPeer);
 });
 
 // Peer connection
@@ -207,19 +220,41 @@ function makeConnection() {
   peerConnection = new RTCPeerConnection();
   peerConnection.addEventListener("icecandidate", onIceCandidate);
   peerConnection.addEventListener("addstream", onAddStream);
+  peerConnection.addEventListener("connectionstatechange", onConnectChange);
   myStream.getTracks().forEach((track) => {
     peerConnection.addTrack(track, myStream);
   });
 }
 
 function onIceCandidate(data) {
-  console.log("sent candidate");
   socket.emit("ice", data.candidate, roomName);
 }
 
 function onAddStream(data) {
-  const peerFaceVideo = document.querySelector("#peerFace video");
-  peerFaceVideo.srcObject = data.stream;
+  const peerList = document.getElementById("peers");
+  const peerFace = document.createElement("div");
+  peerFace.dataset.id = data.stream.id;
+  //여기서 각 stream 의 id 를 저장.
+  peerFace.id = "peerFace";
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.playsInline = true;
+  video.width = 400;
+  video.height = 400;
+  peerFace.appendChild(video);
+  peerList.appendChild(peerFace);
+  video.srcObject = data.stream;
+}
+
+function onConnectChange(data) {
+  const state = peerConnection.connectionState;
+  if (state == "disconnected") {
+    const videoSender = peerConnection.getSenders();
+    for (let sender of videoSender) {
+      peerConnection.removeTrack(sender);
+    }
+    socket.emit("out_room", roomName);
+  }
 }
 
 // chat data channel`
